@@ -5,21 +5,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const pages = document.querySelectorAll('.page');
     const pageTitle = document.getElementById('page-title');
 
+    // Function to show a specific page
+    function showPage(pageId) {
+        if (!pageId) return;
+
+        pages.forEach(p => p.classList.add('hidden'));
+        const targetPage = document.getElementById(`${pageId}-page`);
+        if (targetPage) {
+            targetPage.classList.remove('hidden');
+            // Update active state in nav
+            navLinks.forEach(l => {
+                if (l.dataset.page === pageId) l.classList.add('active');
+                else l.classList.remove('active');
+            });
+            // Save to localStorage
+            localStorage.setItem('activePage-' + window.location.pathname, pageId);
+        }
+    }
+
     // Page Switching Logic
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
-            const pageId = link.getAttribute('data-page');
-
-            navLinks.forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-
-            pages.forEach(p => p.classList.add('hidden'));
-            const targetPage = document.getElementById(`${pageId}-page`);
-            if (targetPage) targetPage.classList.remove('hidden');
-
-            pageTitle.innerText = link.innerText;
+            const pageId = link.dataset.page;
+            showPage(pageId);
         });
     });
+
+    // Check for saved page on load
+    const savedPage = localStorage.getItem('activePage-' + window.location.pathname);
+    if (savedPage) {
+        showPage(savedPage);
+    }
 
     // Role-Based UI Logic
     const isTeacherPage = window.location.pathname.includes('teacher.html');
@@ -35,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateUI();
+    loadAwards();
 
     // AI Tutor Logic
     const aiInput = document.getElementById('ai-input');
@@ -315,21 +332,181 @@ async function loadGuardians() {
     } catch (e) { console.error('Error loading guardians', e); }
 }
 
+let cachedActivities = [];
+
 async function fetchActivities() {
-    const list = document.getElementById('activities-list');
-    if (!list) return;
+    const teacherList = document.getElementById('teacher-activities-list');
+    const studentFullList = document.getElementById('student-activities-full-list');
+    if (!teacherList && !studentFullList) return;
+
     try {
-        const response = await fetch(`${API_BASE}/api/activities`);
-        const activities = await response.json();
-        list.innerHTML = activities.map(a => `
-            <div class="activity-card">
-                <h4>${a.title}</h4>
-                <p>${a.description}</p>
-                <small>${new Date(a.eventDate).toLocaleDateString()}</small>
-            </div>
-        `).join('');
+        const res = await fetch(`${API_BASE}/api/activities`);
+        cachedActivities = await res.json();
+        renderFilteredActivities();
     } catch (e) { console.error('Error fetching activities'); }
 }
+
+function renderFilteredActivities(filter = '') {
+    const teacherList = document.getElementById('teacher-activities-list');
+    const studentFullList = document.getElementById('student-activities-full-list');
+
+    const filtered = cachedActivities.filter(a =>
+        a.targetClass.toLowerCase().includes(filter.toLowerCase()) ||
+        filter === ''
+    ).reverse();
+
+    const renderActivity = (a) => `
+        <div class="activity-card">
+            <div class="activity-header">
+                <span class="activity-tag ${a.category}">${a.category}</span>
+                <span class="activity-cost">${a.cost > 0 ? `MWK ${a.cost}` : 'FREE'}</span>
+            </div>
+            <div class="activity-body">
+                <h3>${a.title}</h3>
+                <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">${a.description}</p>
+            </div>
+            <div class="activity-details">
+                <div>
+                    <span class="detail-label">Classes</span>
+                    <div class="detail-item">${a.targetClass}</div>
+                </div>
+                <div>
+                    <span class="detail-label">Location</span>
+                    <div class="detail-item">${a.location}</div>
+                </div>
+                <div>
+                    <span class="detail-label">Date</span>
+                    <div class="detail-item">${new Date(a.eventDate).toLocaleDateString()}</div>
+                </div>
+                <div>
+                    <span class="detail-label">Contact</span>
+                    <div class="detail-item">${a.contactInfo}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const html = filtered.map(renderActivity).join('');
+    if (teacherList) teacherList.innerHTML = html;
+    if (studentFullList) studentFullList.innerHTML = html;
+}
+
+// Search input listeners
+document.getElementById('student-activity-search')?.addEventListener('input', (e) => {
+    renderFilteredActivities(e.target.value);
+});
+
+document.getElementById('teacher-activity-search')?.addEventListener('input', (e) => {
+    renderFilteredActivities(e.target.value);
+});
+
+document.getElementById('save-activity-btn')?.addEventListener('click', async () => {
+    const title = document.getElementById('activity-title').value;
+    const category = document.getElementById('activity-category').value;
+    const targetClass = document.getElementById('activity-target-class').value;
+    const eventDate = document.getElementById('activity-date').value;
+    const location = document.getElementById('activity-location').value;
+    const contactInfo = document.getElementById('activity-contact').value;
+    const cost = document.getElementById('activity-cost').value || 0;
+    const description = document.getElementById('activity-desc').value;
+
+    if (!title || !targetClass || !eventDate || !location || !contactInfo || !description) {
+        return alert('Please fill in all required fields');
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/activities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, category, targetClass, eventDate, location, contactInfo, cost, description })
+        });
+
+        if (res.ok) {
+            alert('Activity posted successfully!');
+            fetchActivities();
+            // Clear fields
+            ['activity-title', 'activity-target-class', 'activity-date', 'activity-location', 'activity-contact', 'activity-cost', 'activity-desc'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+        }
+    } catch (e) { alert('Error posting activity'); }
+});
+
+async function loadAwards() {
+    const list = document.getElementById('awards-list');
+    const featuredSection = document.getElementById('featured-star-section');
+    if (!list && !featuredSection) return;
+
+    const awards = JSON.parse(localStorage.getItem('edu-awards') || '[]');
+    if (awards.length === 0) {
+        if (list) list.innerHTML = '<p class="form-desc" style="text-align:center; padding: 2rem;">No awards posted yet this week.</p>';
+        if (featuredSection) featuredSection.classList.add('hidden');
+        return;
+    }
+
+    const latest = awards[awards.length - 1];
+
+    // Handle high-impact featured section (Home/Student Page)
+    if (featuredSection) {
+        featuredSection.classList.remove('hidden');
+        const starName = document.getElementById('star-name');
+        const starDesc = document.getElementById('star-description');
+        const starType = document.getElementById('star-type');
+
+        if (starName) starName.innerText = latest.studentName;
+        if (starDesc) starDesc.innerText = latest.description;
+        if (starType) starType.innerText = latest.type;
+
+        const imgContainer = document.getElementById('star-image-container');
+        if (imgContainer) {
+            imgContainer.innerHTML = latest.image
+                ? `<img src="${latest.image}" alt="${latest.studentName}">`
+                : `<div style="background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: white;">🌟</div>`;
+        }
+    }
+
+    // Handle secondary list (Teacher/Admin View)
+    if (list) {
+        list.innerHTML = awards.reverse().map(a => `
+        <div class="award-card">
+            ${a.image ? `<img src="${a.image}" class="award-img">` : '<div class="award-img" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover)); display:flex; align-items:center; justify-content:center; color: white; font-size:5rem;">🌟</div>'}
+            <div class="award-info">
+                <h3>${a.type}</h3>
+                <p>${a.studentName}</p>
+                <small style="display:block; line-height: 1.4; color: var(--text-muted);">${a.description}</small>
+            </div>
+        </div>
+    `).join('');
+    }
+}
+
+document.getElementById('save-award-btn')?.addEventListener('click', async () => {
+    const type = document.getElementById('award-type').value;
+    const name = document.getElementById('award-student-name').value;
+    const desc = document.getElementById('award-description').value;
+    const picInput = document.getElementById('award-student-pic');
+
+    if (!name || !desc) return alert('Student name and description are required');
+
+    let base64Image = null;
+    if (picInput && picInput.files && picInput.files[0]) {
+        base64Image = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(picInput.files[0]);
+        });
+    }
+
+    const awards = JSON.parse(localStorage.getItem('edu-awards') || '[]');
+    awards.push({ type, studentName: name, description: desc, image: base64Image, date: new Date() });
+    localStorage.setItem('edu-awards', JSON.stringify(awards));
+
+    alert('Award posted successfully!');
+    document.getElementById('award-student-name').value = '';
+    document.getElementById('award-description').value = '';
+    if (picInput) picInput.value = '';
+    loadAwards();
+});
 
 async function fetchStats() {
     const totalStudentsEl = document.getElementById('total-students');

@@ -10,29 +10,48 @@
 </head>
 
 <body>
-    <nav class="sidebar">
-        <div class="logo">EduChain AI (Student)</div>
+    <header class="main-header">
+        <div class="logo-box">EduChain AI</div>
         <ul class="nav-links">
-            <li class="active" data-page="dashboard" data-role="student">Dashboard</li>
+            <li class="active" data-page="dashboard" data-role="student">Home</li>
             <li data-page="ai-tutor" data-role="student">AI Tutor</li>
-            <li data-page="activities" data-role="student">Activities</li>
+            <li data-page="activities" data-role="student">Parents</li>
         </ul>
         <div class="user-info">
             <span id="username">Student</span>
             <button id="logout-btn">Logout</button>
         </div>
-    </nav>
+    </header>
 
     <main class="content">
-        <header class="top-bar">
-            <h1 id="page-title">Dashboard</h1>
-        </header>
-
         <section id="dashboard-page" class="page">
-            <div class="activity-feed">
-                <h2>Recent Announcements</h2>
-                <div id="activities-list"></div>
+            <section id="featured-star-section" class="featured-star hidden">
+                <div class="star-container">
+                    <div class="star-text">
+                        <h3 id="star-type">Award Category</h3>
+                        <h2 id="star-title">Meet our this week star!</h2>
+                        <h1 id="star-name">Student Name</h1>
+                        <p id="star-description">Description goes here.</p>
+                    </div>
+                    <div class="star-image">
+                        <div id="star-image-container">
+                            <!-- Image will be injected here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="hero">
+                <div class="hero-text">
+                    <h1>Huge collection of <span>offline learning</span></h1>
+                    <p>An offline AI tutor and management system designed to empower students with accessible,
+                        high-quality education anywhere.</p>
+                </div>
+                <div class="hero-image">
+                    <img src="group-african-kids-learning-together.jpg" alt="Students learning">
+                </div>
             </div>
+
         </section>
 
         <section id="ai-tutor-page" class="page hidden">
@@ -41,6 +60,21 @@
                 <div class="input-row">
                     <input type="text" id="ai-input" placeholder="Ask the AI Tutor anything...">
                     <button id="ai-send">Ask</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="activities-page" class="page hidden">
+            <div class="activity-container">
+                <h1>School Activities & Announcements</h1>
+                <p class="form-desc" style="margin-bottom: 3rem;">Stay updated with the latest events, sports, and
+                    school news.</p>
+                <div class="search-filter">
+                    <input type="text" id="student-activity-search"
+                        placeholder="Search by class (e.g. Std 1, Form 4, All)...">
+                </div>
+                <div id="student-activities-full-list" class="student-grid">
+                    <!-- Activities will be loaded here -->
                 </div>
             </div>
         </section>
