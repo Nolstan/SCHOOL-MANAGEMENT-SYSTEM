@@ -2,7 +2,7 @@
 
 A comprehensive School Management and Offline AI Learning System built with Node.js, Express, and MongoDB. It features automated WhatsApp notifications for parents and an integrated AI Tutor powered by Ollama.
 
-## 🚀 Features
+##  Features
 
 - **Student Management**: Register and manage students, classes, and subjects.
 - **Attendance Tracking**: Easy-to-use interface for teachers to mark attendance.
@@ -11,7 +11,7 @@ A comprehensive School Management and Offline AI Learning System built with Node
 - **Data Analysis**: AI-powered insights for teachers to analyze student performance and attendance trends.
 - **Fee Management**: Track student fee balances and history.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Backend**: Node.js, Express
 - **Database**: MongoDB (Mongoose ODM)
@@ -19,7 +19,7 @@ A comprehensive School Management and Offline AI Learning System built with Node
 - **AI Engine**: Ollama (Llama 3.1)
 - **Frontend**: Vanilla HTML5, CSS3, JavaScript
 
-## 📦 Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v16 or higher)
@@ -53,7 +53,7 @@ npm run dev
 ### Step 5: WhatsApp Initialization
 When the server starts, a QR code will appear in the terminal. Scan it with your WhatsApp mobile app to enable the notification service.
 
-## 📂 Project Structure
+##  Project Structure
 
 - `server.js`: Main entry point.
 - `routes/`: API endpoint definitions.
@@ -62,8 +62,8 @@ When the server starts, a QR code will appear in the terminal. Scan it with your
 - `services/`: External integrations (WhatsApp & AI).
 - `public/`: Frontend static assets.
 
-## 📜 System Design
+##  System Design
 For a deeper dive into the architecture, check out the [System Design Documentation](.system_generated/brain/<conversation-id>/system_design.md).
 
-## 🤝 Contributing
+##  Contributing
 Feel free to fork the project and submit pull requests for any enhancements or bug fixes.
