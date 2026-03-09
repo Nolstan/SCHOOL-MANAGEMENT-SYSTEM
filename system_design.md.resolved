@@ -1,0 +1,145 @@
+# School Management System Design Documentation
+
+This document provides a technical overview of the School Management System, including its architecture, database schema, and key functional flows.
+
+## 1. High-Level Architecture
+
+The system follows a modern **MERN-like** architecture (using Node.js instead of React for the frontend in this specific iteration) with external service integrations for messaging and AI.
+
+```mermaid
+graph TD
+    subgraph Client_Side [Frontend]
+        UI[Browser / HTML & CSS]
+        JS[Vanilla JavaScript / Fetch API]
+    end
+
+    subgraph Server_Side [Backend - Node.js & Express]
+        API[Express API]
+        Controller[Controllers]
+        Service[Services]
+        Model[Mongoose Models]
+    end
+
+    subgraph External_Services
+        WhatsApp[WhatsApp-Web.js]
+        Ollama[Ollama AI / Llama 3.1]
+    end
+
+    subgraph Database
+        MongoDB[(MongoDB)]
+    end
+
+    UI <--> JS
+    JS <--> API
+    API <--> Controller
+    Controller <--> Service
+    Controller <--> Model
+    Model <--> MongoDB
+    Service <--> WhatsApp
+    Service <--> Ollama
+```
+
+## 2. Entity Relationship Diagram (ERD)
+
+The system uses MongoDB to store data. Relationships are managed through ObjectIDs and references.
+
+```mermaid
+erDiagram
+    User ||--o{ Class : "manages"
+    User ||--o{ Attendance : "records"
+    Class ||--o{ Student : "contains"
+    Class ||--o{ Subject : "has"
+    Student ||--o{ Attendance : "has records"
+    Student ||--o{ Grade : "receives"
+    Subject ||--o{ Grade : "associated with"
+    Guardian ||--o{ Student : "responsible for"
+
+    User {
+        ObjectId _id
+        string username
+        string passwordHash
+        string role "admin/teacher"
+    }
+
+    Student {
+        ObjectId _id
+        string firstName
+        string lastName
+        ObjectId classId
+        string parentPhone
+        float feeBalance
+    }
+
+    Class {
+        ObjectId _id
+        string name
+        ObjectId teacherId
+    }
+
+    Attendance {
+        ObjectId _id
+        ObjectId studentId
+        ObjectId moduleId
+        date date
+        string status "present/absent"
+    }
+
+    Guardian {
+        ObjectId _id
+        string firstName
+        string phone
+        ObjectIdArray students
+    }
+```
+
+## 3. Core Functional Flows
+
+### A. Attendance Marking & WhatsApp Notification
+When a teacher marks a student as absent, the system automatically triggers a WhatsApp notification to the parent.
+
+```mermaid
+sequenceDiagram
+    participant Teacher as Teacher UI
+    participant Server as Express Server
+    participant DB as MongoDB
+    participant WA as WhatsApp Service
+    participant Parent as Parent Phone
+
+    Teacher->>Server: POST /api/attendance (status: absent)
+    Server->>DB: Save Attendance Record
+    Server->>DB: Fetch Student & Parent Details
+    Server->>WA: sendMessage(parentPhone, "Student Absent")
+    WA->>Parent: WhatsApp Notification Sent
+    Server-->>Teacher: Success Response
+```
+
+### B. AI Tutor Interaction
+Students can interact with an offline AI (Ollama) for educational support.
+
+```mermaid
+sequenceDiagram
+    participant Student as Student UI
+    participant Server as Express Server
+    participant AI_Service as AI Service (Ollama)
+    participant Model as Llama 3.1
+
+    Student->>Server: POST /api/ai/tutor (question)
+    Server->>AI_Service: generateAIResponse(prompt)
+    AI_Service->>Model: Request Generation
+    Model-->>AI_Service: Response Text
+    AI_Service-->>Server: Formatted Response
+    Server-->>Student: Return Answer
+```
+
+## 4. Component Structure
+
+The project follows a modular structure to ensure scalability and maintainability:
+
+- **`routes/`**: Handles HTTP request mapping.
+- **`controllers/`**: Contains the business logic for each route.
+- **`models/`**: Defines the data structure using Mongoose schemas.
+- **`services/`**: Abstracts external integrations (WhatsApp, AI).
+- **`public/`**: Contains static assets and frontend logic.
+
+---
+*Prepared for technical presentation to judges.*
